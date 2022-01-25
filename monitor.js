@@ -74,7 +74,7 @@ function getHfpBlobNameRegex(minusHours) {
     let date = minusHours > 0 ? subHours(new Date(), minusHours) : new Date()
     let hourString = getHours(date).toString().padStart(2, '0')
     let dateString = format(date, 'yyyy-MM-dd')
-    return new RegExp(`${dateString}.${hourString}.*csv.zst`)
+    return new RegExp(`${dateString}T${hourString}.*csv.zst`)
 }
 
 async function alertSlack(message) {
