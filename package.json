@@ -1,0 +1,17 @@
+{
+  "name": "transitlog-hfp-csv-sink-monitor",
+  "version": "1.0.0",
+  "main": "monitor.js",
+  "license": "ISC",
+  "scripts": {
+    "start": "node -r esm -r dotenv/config ./monitor.js"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "12.8.0",
+    "date-fns": "2.28.0",
+    "dotenv": "14.2.0",
+    "esm": "3.2.25",
+    "got": "11.5.1",
+    "node-schedule": "2.1.0"
+  }
+}
