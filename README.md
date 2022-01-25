@@ -10,6 +10,6 @@ Install node modules with `yarn`
 
 `yarn run start`
 
-### Build the image for production
+### Build for production
 
 `./deploy_prod.sh`
