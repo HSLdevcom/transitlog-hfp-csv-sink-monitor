@@ -33,5 +33,5 @@ const secretsEnv = mapValues(process.env, (value, key) => {
 export const HFP_STORAGE_CONNECTION_STRING = secretsEnv.HFP_STORAGE_CONNECTION_STRING || "";
 export const HFP_CONTAINER_NAME = secretsEnv.HFP_CONTAINER_NAME || "";
 export const MONITOR_CRON = secretsEnv.MONITOR_CRON || "";
-export const SLACK_WEBHOOK_URL = secretsEnv.SLACK_WEBHOOK_URL || "";
+export const MONITOR_SLACK_WEBHOOK_URL = secretsEnv.MONITOR_SLACK_WEBHOOK_URL || "";
 export const MONITOR_SLACK_USER_IDS = secretsEnv.MONITOR_SLACK_USER_IDS || "";

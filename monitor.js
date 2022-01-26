@@ -8,7 +8,7 @@ import {
     HFP_STORAGE_CONNECTION_STRING,
     HFP_CONTAINER_NAME,
     MONITOR_CRON,
-    SLACK_WEBHOOK_URL,
+    MONITOR_SLACK_WEBHOOK_URL,
     MONITOR_SLACK_USER_IDS
 } from './constants.js'
 
@@ -92,7 +92,7 @@ async function alertSlack(message) {
         text: fullMessage,
     };
 
-    return got(SLACK_WEBHOOK_URL, {
+    return got(MONITOR_SLACK_WEBHOOK_URL, {
         method: 'post',
         json: body,
     });
