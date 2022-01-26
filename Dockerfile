@@ -16,6 +16,6 @@ RUN yarn
 # Bundle app source
 COPY . ${WORK}
 
-COPY .env ${WORK}/.env
+COPY .env.prod ${WORK}/.env
 
 CMD yarn run start
