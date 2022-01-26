@@ -6,20 +6,20 @@ import got from 'got';
 import { format, getHours, subDays, subHours } from "date-fns";
 import {
     HFP_STORAGE_CONNECTION_STRING,
-    HFP_CONTAINER_NAME,
-    MONITOR_CRON,
-    MONITOR_SLACK_WEBHOOK_URL,
-    MONITOR_SLACK_USER_IDS
+    HFP_STORAGE_CONTAINER_NAME,
+    HFP_MONITOR_CRON,
+    HFP_MONITOR_SLACK_WEBHOOK_URL,
+    HFP_MONITOR_SLACK_USER_IDS
 } from './constants.js'
 
 export function scheduleMonitor() {
-    if (!MONITOR_CRON) {
-        throw new Error('MONITOR_CRON ENV variable is missing.')
+    if (!HFP_MONITOR_CRON) {
+        throw new Error('HFP_MONITOR_CRON ENV variable is missing.')
     }
 
-    console.log(`Scheduled monitor with cron: ${MONITOR_CRON}`);
+    console.log(`Scheduled monitor with cron: ${HFP_MONITOR_CRON}`);
 
-    let job = schedule.scheduleJob(MONITOR_CRON, runHfpSinkMonitor)
+    let job = schedule.scheduleJob(HFP_MONITOR_CRON, runHfpSinkMonitor)
     if (job) {
         console.log('Next monitoring will run:', job.nextInvocation().toLocaleString())
     }
@@ -33,11 +33,11 @@ async function runHfpSinkMonitor() {
     if (!HFP_STORAGE_CONNECTION_STRING) {
         throw new Error('Secret HFP_STORAGE_CONNECTION_STRING is missing.')
     }
-    if (!HFP_CONTAINER_NAME) {
-        throw new Error('Secret HFP_CONTAINER_NAME is missing.')
+    if (!HFP_STORAGE_CONTAINER_NAME) {
+        throw new Error('Secret HFP_STORAGE_CONTAINER_NAME is missing.')
     }
 
-    console.log(`Running HFP sink monitor for container: ${HFP_CONTAINER_NAME}`)
+    console.log(`Running HFP sink monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
 
     let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
 
@@ -49,7 +49,7 @@ async function runHfpSinkMonitor() {
     let matchingRegex = null
     let foundBlobName = null
     for await (const blob of storageClient.findBlobsByTags(
-        `@container='${HFP_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
+        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
     )) {
         // Now we need to find at least one blob with name having curr/prev hour
         if (regex0.test(blob.name)) {
@@ -80,7 +80,7 @@ function getHfpBlobNameRegex(minusHours) {
 }
 
 async function alertSlack(message) {
-    const mentionUserIds = MONITOR_SLACK_USER_IDS.split(',')
+    const mentionUserIds = HFP_MONITOR_SLACK_USER_IDS.split(',')
     const fullMessage = `${
         mentionUserIds.length > 0 ? `Hey${mentionUserIds.map((userId) => ` <@${userId}>`)}, ` : ''
     } ${message}`
@@ -92,7 +92,7 @@ async function alertSlack(message) {
         text: fullMessage,
     };
 
-    return got(MONITOR_SLACK_WEBHOOK_URL, {
+    return got(HFP_MONITOR_SLACK_WEBHOOK_URL, {
         method: 'post',
         json: body,
     });
