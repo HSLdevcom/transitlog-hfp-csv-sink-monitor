@@ -4,11 +4,13 @@ import schedule from 'node-schedule'
 import { BlobServiceClient } from '@azure/storage-blob'
 import got from 'got';
 import { format, getHours, subDays, subHours } from "date-fns";
-const HFP_STORAGE_CONNECTION_STRING = process.env.HFP_STORAGE_CONNECTION_STRING
-const HFP_CONTAINER_NAME = process.env.HFP_CONTAINER_NAME
-const MONITOR_CRON = process.env.MONITOR_CRON
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
-const MONITOR_SLACK_USER_IDS = process.env.MONITOR_SLACK_USER_IDS
+import {
+    HFP_STORAGE_CONNECTION_STRING,
+    HFP_CONTAINER_NAME,
+    MONITOR_CRON,
+    SLACK_WEBHOOK_URL,
+    MONITOR_SLACK_USER_IDS
+} from './constants.js'
 
 export function scheduleMonitor() {
     if (!MONITOR_CRON) {
