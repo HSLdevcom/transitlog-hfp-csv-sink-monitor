@@ -45,6 +45,7 @@ async function runHfpSinkMonitor() {
 
     let regex0 = getHfpBlobNameRegex(0)
     let regex1 = getHfpBlobNameRegex(1)
+    let regex2 = getHfpBlobNameRegex(2)
 
     let matchingRegex = null
     let foundBlobName = null
@@ -62,12 +63,17 @@ async function runHfpSinkMonitor() {
             foundBlobName = blob.name
             break;
         }
+        if (regex2.test(blob.name)) {
+            matchingRegex = regex2
+            foundBlobName = blob.name
+            break;
+        }
     }
     if (matchingRegex) {
         let dateStr = format(new Date, "dd.MM.yyyy HH:mm")
         console.log(`[${dateStr}] Found a blob with name: ${foundBlobName} with matching regex: ${matchingRegex}`)
     } else {
-        let message = `Critical alert: HFP sink [PRODUCTION] might be down, did not receive any data from HFP-sink within 2 hours (did not find HFP blobs with name matching pattern: ${regex0} or ${regex1}). Investigate and fix the problem as soon as possible.`
+        let message = `Critical alert: HFP sink [PRODUCTION] might be down, did not receive any data from HFP-sink within 3 hours (did not find HFP blobs with name matching pattern: ${regex0} or ${regex1} or ${regex2}). Investigate and fix the problem as soon as possible.`
         await alertSlack(message)
     }
 }
