@@ -51,7 +51,6 @@ async function runHfpSinkMonitor() {
         blobNameMatchingRegexList.push(getHfpBlobNameSubHoursRegex(i))
     }
 
-    let matchingRegex = null
     let foundBlobName = null
     // List of uniqueBlobNamesObjects: { blobName, parsedBlobName }
     let uniqueBlobNamesObjects = []
@@ -59,8 +58,7 @@ async function runHfpSinkMonitor() {
         `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
     )) {
         // CHECK 1: Find at least one blob with name within MONITOR_BLOB_NAME_WITHIN_HOURS
-        if (!matchingRegex && blobNameMatchingRegexList.some((regex) => regex.test(blob.name))) {
-            matchingRegex = regex
+        if (!foundBlobName && blobNameMatchingRegexList.some((regex) => regex.test(blob.name))) {
             foundBlobName = blob.name
         }
 
@@ -91,12 +89,12 @@ async function runHfpSinkMonitor() {
     if (!isAnyBlobLastModifiedOk) {
         alertMessage += `Did not find any blob with lastModified within ${MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS} hours. `
         alertMessage += alertMessageEnd
-    } else if (!matchingRegex) {
+    } else if (!foundBlobName) {
         alertMessage = `Did not find any blob with name within ${MONITOR_BLOB_NAME_WITHIN_HOURS} hours. `
         alertMessage += alertMessageEnd
     } else {
         let dateStr = format(new Date, "dd.MM.yyyy HH:mm")
-        console.log(`[${dateStr}] Found a blob with name: ${foundBlobName} with matching regex: ${matchingRegex}`)
+        console.log(`[${dateStr}] Monitoring OK, found a blob with name: ${foundBlobName}.`)
         alertMessage = null
     }
 
