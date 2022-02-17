@@ -1,9 +1,9 @@
 require('dotenv').config()
 
 import schedule from 'node-schedule'
-import { BlobServiceClient } from '@azure/storage-blob'
+import { BlobClient, BlobServiceClient } from '@azure/storage-blob'
 import got from 'got';
-import { format, getHours, subDays, subHours } from "date-fns";
+import { format, formatISO, getHours, subDays, subHours, parseISO, getUnixTime } from "date-fns";
 import {
     HFP_STORAGE_CONNECTION_STRING,
     HFP_STORAGE_CONTAINER_NAME,
@@ -11,6 +11,9 @@ import {
     HFP_MONITOR_SLACK_WEBHOOK_URL,
     HFP_MONITOR_SLACK_USER_IDS
 } from './constants.js'
+
+const MONITOR_BLOB_NAME_WITHIN_HOURS=12
+const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=1
 
 export function scheduleMonitor() {
     if (!HFP_MONITOR_CRON) {
@@ -43,46 +46,78 @@ async function runHfpSinkMonitor() {
 
     let yesterdayDateStr = format(subDays(new Date(), 1), 'yyyy-MM-dd')
 
-    let regex0 = getHfpBlobNameRegex(0)
-    let regex1 = getHfpBlobNameRegex(1)
-    let regex2 = getHfpBlobNameRegex(2)
+    let blobNameMatchingRegexList = []
+    for (let i = 0; i < MONITOR_BLOB_NAME_WITHIN_HOURS; i++) {
+        blobNameMatchingRegexList.push(getHfpBlobNameSubHoursRegex(i))
+    }
 
     let matchingRegex = null
     let foundBlobName = null
+    // List of uniqueBlobNamesObjects: { blobName, parsedBlobName }
+    let uniqueBlobNamesObjects = []
     for await (const blob of storageClient.findBlobsByTags(
         `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
     )) {
-        // Now we need to find at least one blob with name having curr/prev hour
-        if (regex0.test(blob.name)) {
-            matchingRegex = regex0
+        // CHECK 1: Find at least one blob with name within MONITOR_BLOB_NAME_WITHIN_HOURS
+        if (!matchingRegex && blobNameMatchingRegexList.some((regex) => regex.test(blob.name))) {
+            matchingRegex = regex
             foundBlobName = blob.name
-            break;
         }
-        if (regex1.test(blob.name)) {
-            matchingRegex = regex1
-            foundBlobName = blob.name
-            break;
-        }
-        if (regex2.test(blob.name)) {
-            matchingRegex = regex2
-            foundBlobName = blob.name
-            break;
+
+        // Create unique list of blob name objects
+        let parsedBlobName = parseUniqueBlobName(blob.name)
+        if (!uniqueBlobNamesObjects.some((b) => b.parsedBlobName === parsedBlobName)) {
+            uniqueBlobNamesObjects.push({ blobName: blob.name, parsedBlobName })
         }
     }
-    if (matchingRegex) {
+
+    // CHECK 2: Find at least one blob with lastModified within MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS
+    let isAnyBlobLastModifiedOk = false
+    for (let blobNameObject of uniqueBlobNamesObjects) {
+        let blobName = blobNameObject.blobName
+        let blobClient = new BlobClient(HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME, blobName)
+        let blobProperties = await blobClient.getProperties()
+
+        let blobDate = new Date(blobProperties.lastModified)
+        let minDate = subHours(new Date(), MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS)
+        if (getUnixTime(blobDate) > getUnixTime(minDate)) {
+            isAnyBlobLastModifiedOk = true
+            break
+        }
+    }
+
+    let alertMessage = 'Critical alert: HFP sink [PRODUCTION] might be down. '
+    let alertMessageEnd = 'Investigate and fix the problem as soon as possible.'
+    if (!isAnyBlobLastModifiedOk) {
+        alertMessage += `Did not find any blob with lastModified within ${MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS} hours. `
+        alertMessage += alertMessageEnd
+    } else if (!matchingRegex) {
+        alertMessage = `Did not find any blob with name within ${MONITOR_BLOB_NAME_WITHIN_HOURS} hours. `
+        alertMessage += alertMessageEnd
+    } else {
         let dateStr = format(new Date, "dd.MM.yyyy HH:mm")
         console.log(`[${dateStr}] Found a blob with name: ${foundBlobName} with matching regex: ${matchingRegex}`)
-    } else {
-        let message = `Critical alert: HFP sink [PRODUCTION] might be down, did not receive any data from HFP-sink within 3 hours (did not find HFP blobs with name matching pattern: ${regex0} or ${regex1} or ${regex2}). Investigate and fix the problem as soon as possible.`
-        await alertSlack(message)
+        alertMessage = null
+    }
+
+    if (alertMessage) {
+        await alertSlack(alertMessage)
     }
 }
 
-function getHfpBlobNameRegex(minusHours) {
+// Current blob name format is yyyy-MM-ddTHH-[0-9]
+function parseUniqueBlobName(blobName) {
+    let nameParts = blobName.split('T')
+    let dateString = nameParts[0]
+    let hours = nameParts[1].substring(0, 4)
+    return dateString+hours
+}
+
+function getHfpBlobNameSubHoursRegex(minusHours) {
     let date = minusHours > 0 ? subHours(new Date(), minusHours) : new Date()
     let hourString = getHours(date).toString().padStart(2, '0')
     let dateString = format(date, 'yyyy-MM-dd')
-    return new RegExp(`${dateString}T${hourString}.*csv.zst`)
+    return new RegExp(`${dateString}T${hourString}-*.*csv.zst`)
 }
 
 async function alertSlack(message) {
