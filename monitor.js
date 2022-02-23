@@ -13,7 +13,7 @@ import {
 } from './constants.js'
 
 const MONITOR_BLOB_NAME_WITHIN_HOURS=12
-const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=1
+const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=2
 
 export function scheduleMonitor() {
     if (!HFP_MONITOR_CRON) {
