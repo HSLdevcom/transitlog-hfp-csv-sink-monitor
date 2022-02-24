@@ -10,7 +10,7 @@ import {
     HFP_MONITOR_SLACK_WEBHOOK_URL,
     HFP_STORAGE_CONNECTION_STRING,
     HFP_STORAGE_CONTAINER_NAME
-} from './constants.js'
+} from './constants'
 
 const MONITOR_BLOB_NAME_WITHIN_HOURS=12
 const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=4
@@ -46,14 +46,18 @@ async function runHfpSinkMonitor() {
 
     let yesterdayDateStr = format(subDays(new Date(), 1), 'yyyy-MM-dd')
 
-    let blobNameMatchingRegexList = []
+    let blobNameMatchingRegexList: RegExp[] = []
     for (let i = 0; i < MONITOR_BLOB_NAME_WITHIN_HOURS; i++) {
         blobNameMatchingRegexList.push(getHfpBlobNameSubHoursRegex(i))
     }
 
-    let foundBlobName = null
-    // List of uniqueBlobNamesObjects: { blobName, parsedBlobName }
-    let uniqueBlobNamesObjects = []
+    let foundBlobName: string | null = null
+
+    interface UniqueBlobName {
+        blobName: string
+        parsedBlobName: string
+    }
+    let uniqueBlobNamesObjects: UniqueBlobName[] = []
     for await (const blob of storageClient.findBlobsByTags(
         `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
     )) {
@@ -75,8 +79,9 @@ async function runHfpSinkMonitor() {
         let blobName = blobNameObject.blobName
         let blobClient = new BlobClient(HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME, blobName)
         let blobProperties = await blobClient.getProperties()
+        let lastModified = blobProperties.lastModified as unknown as string
 
-        let blobDate = new Date(blobProperties.lastModified)
+        let blobDate = new Date(lastModified)
         let minDate = subHours(new Date(), MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS)
         if (getUnixTime(blobDate) > getUnixTime(minDate)) {
             isAnyBlobLastModifiedOk = true
@@ -84,7 +89,7 @@ async function runHfpSinkMonitor() {
         }
     }
 
-    let alertMessage = 'Critical alert: HFP sink [PRODUCTION] might be down. '
+    let alertMessage: string | null = 'Critical alert: HFP sink [PRODUCTION] might be down. '
     let alertMessageEnd = 'Investigate and fix the problem as soon as possible.'
     if (!isAnyBlobLastModifiedOk) {
         alertMessage += `Did not find any blob with lastModified within ${MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS} hours. `
@@ -99,27 +104,27 @@ async function runHfpSinkMonitor() {
     }
 
     if (alertMessage) {
-        await alertSlack(alertMessage)
+        // await alertSlack(alertMessage)
     }
 }
 
 // Current blob name format is yyyy-MM-ddTHH-[0-9]
-function parseUniqueBlobName(blobName) {
+function parseUniqueBlobName(blobName: string) {
     let nameParts = blobName.split('T')
     let dateString = nameParts[0]
     let hours = nameParts[1].substring(0, 4)
     return dateString+hours
 }
 
-function getHfpBlobNameSubHoursRegex(minusHours) {
+function getHfpBlobNameSubHoursRegex(minusHours: number) {
     let date = minusHours > 0 ? subHours(new Date(), minusHours) : new Date()
     let hourString = getHours(date).toString().padStart(2, '0')
     let dateString = format(date, 'yyyy-MM-dd')
     return new RegExp(`${dateString}T${hourString}-*.*csv.zst`)
 }
 
-async function alertSlack(message) {
-    const mentionUserIds = HFP_MONITOR_SLACK_USER_IDS.split(',')
+async function alertSlack(message: string) {
+    const mentionUserIds: string[] = HFP_MONITOR_SLACK_USER_IDS.split(',')
     const fullMessage = `${
         mentionUserIds.length > 0 ? `Hey${mentionUserIds.map((userId) => ` <@${userId}>`)}, ` : ''
     } ${message}`

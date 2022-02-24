@@ -1,21 +1,31 @@
-FROM node:16-alpine
+FROM node:14-alpine AS base
 
 ENV WORK /opt/transitlog-hfp-csv-sink-monitor
 
-ENV TZ="Europe/Helsinki"
+WORKDIR ${WORK}
 
 # Create app directory
 RUN mkdir -p ${WORK}
-WORKDIR ${WORK}
 
-# Install app dependencies
-COPY yarn.lock ${WORK}
-COPY package.json ${WORK}
-RUN yarn
-
-# Bundle app source
+# Copy files to app directory
 COPY . ${WORK}
 
-COPY .env.prod ${WORK}/.env
+# Bundle app source
+RUN yarn install && yarn run build
 
-CMD yarn run start
+FROM node:14-alpine
+ENV WORK /opt/transitlog-hfp-csv-sink-monitor
+ENV TZ="Europe/Helsinki"
+
+WORKDIR ${WORK}
+
+RUN mkdir -p ${WORK}/build
+# Copy build folder from previous stage
+COPY --from=base ${WORK}/build ${WORK}/build/
+# Copy the .env.<environment> file as .env
+COPY .env.prod ${WORK}/.env
+COPY yarn.lock package.json ${WORK}/
+
+RUN yarn install --production=true && yarn cache clean
+
+CMD yarn run start:production
