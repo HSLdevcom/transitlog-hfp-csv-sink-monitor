@@ -4,7 +4,7 @@ import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './const
 import {cloneDeep} from 'lodash'
 import { alertSlack } from './alertSlack'
 
-let DATE_FORMAT = 'yyyy-MM-dd'
+const DATE_FORMAT = 'yyyy-MM-dd'
 
 /**
  * Designed to run once per day so that there has been enough time for
@@ -13,6 +13,16 @@ let DATE_FORMAT = 'yyyy-MM-dd'
  * Checks that there should be at least one file name per hour with VP in it's name.
  */
 export async function runPreviousDayMonitor() {
+    try {
+        await previousDayMonitor()
+    } catch(e) {
+        let alertMessage = 'Something bad happened. There seems to be an issue with monitoring HFP-data. Investigate and fix the problem.'
+        console.log('Something bad happened ', e)
+        await alertSlack(alertMessage)
+    }
+}
+
+async function previousDayMonitor() {
     if (!HFP_STORAGE_CONNECTION_STRING) {
         throw new Error('Secret HFP_STORAGE_CONNECTION_STRING is missing.')
     }

@@ -8,11 +8,23 @@ import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './const
 const MONITOR_BLOB_NAME_WITHIN_HOURS=12
 const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=4
 
+const DATE_FORMAT = 'yyyy-MM-dd'
+
 /**
  * Designed to run AFTER HFP-data has been updated. Currently HFP-data gets
  * updated every 45 min so we should run the monitor every 50 min.
  */
 export async function runCurrentDayMonitor() {
+    try {
+        await currentDayMonitor()
+    } catch(e) {
+        let alertMessage = 'Something bad happened. There seems to be an issue with monitoring HFP-data. Investigate and fix the problem.'
+        console.log('Something bad happened ', e)
+        await alertSlack(alertMessage)
+    }
+}
+
+async function currentDayMonitor() {
     if (!HFP_STORAGE_CONNECTION_STRING) {
         throw new Error('Secret HFP_STORAGE_CONNECTION_STRING is missing.')
     }
@@ -24,7 +36,7 @@ export async function runCurrentDayMonitor() {
 
     let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
 
-    let yesterdayDateStr = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+    let yesterdayDateStr = format(subDays(new Date(), 1), DATE_FORMAT)
 
     let blobNameMatchingRegexList: RegExp[] = []
     for (let i = 0; i < MONITOR_BLOB_NAME_WITHIN_HOURS; i++) {
