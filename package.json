@@ -4,9 +4,9 @@
   "main": "monitor.js",
   "license": "ISC",
   "scripts": {
-    "start": "ts-node-dev -r dotenv/config src/monitor.ts",
+    "start": "ts-node-dev -r dotenv/config src/index.ts",
     "build": "tsc -p .",
-    "start:production": "node -r dotenv/config build/monitor.js"
+    "start:production": "node -r dotenv/config build/index.js"
   },
   "dependencies": {
     "@azure/storage-blob": "12.8.0",

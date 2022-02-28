@@ -1,38 +1,18 @@
 require('dotenv').config()
 
-import schedule from 'node-schedule'
 import {BlobClient, BlobServiceClient} from '@azure/storage-blob'
-import got from 'got';
 import {format, getHours, getUnixTime, subDays, subHours} from "date-fns";
-import {
-    HFP_MONITOR_CRON,
-    HFP_MONITOR_SLACK_USER_IDS,
-    HFP_MONITOR_SLACK_WEBHOOK_URL,
-    HFP_STORAGE_CONNECTION_STRING,
-    HFP_STORAGE_CONTAINER_NAME
-} from './constants'
+import { alertSlack } from './alertSlack';
+import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './constants'
 
 const MONITOR_BLOB_NAME_WITHIN_HOURS=12
 const MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS=4
-
-export function scheduleMonitor() {
-    if (!HFP_MONITOR_CRON) {
-        throw new Error('HFP_MONITOR_CRON ENV variable is missing.')
-    }
-
-    console.log(`Scheduled monitor with cron: ${HFP_MONITOR_CRON}`);
-
-    let job = schedule.scheduleJob(HFP_MONITOR_CRON, runHfpSinkMonitor)
-    if (job) {
-        console.log('Next monitoring will run:', job.nextInvocation().toLocaleString())
-    }
-}
 
 /**
  * Designed to run AFTER HFP-data has been updated. Currently HFP-data gets
  * updated every 45 min so we should run the monitor every 50 min.
  */
-async function runHfpSinkMonitor() {
+export async function runCurrentDayMonitor() {
     if (!HFP_STORAGE_CONNECTION_STRING) {
         throw new Error('Secret HFP_STORAGE_CONNECTION_STRING is missing.')
     }
@@ -40,7 +20,7 @@ async function runHfpSinkMonitor() {
         throw new Error('Secret HFP_STORAGE_CONTAINER_NAME is missing.')
     }
 
-    console.log(`Running HFP sink monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
+    console.log(`Running HFP sink current day monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
 
     let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
 
@@ -104,7 +84,7 @@ async function runHfpSinkMonitor() {
     }
 
     if (alertMessage) {
-        // await alertSlack(alertMessage)
+        await alertSlack(alertMessage)
     }
 }
 
@@ -122,25 +102,3 @@ function getHfpBlobNameSubHoursRegex(minusHours: number) {
     let dateString = format(date, 'yyyy-MM-dd')
     return new RegExp(`${dateString}T${hourString}-*.*csv.zst`)
 }
-
-async function alertSlack(message: string) {
-    const mentionUserIds: string[] = HFP_MONITOR_SLACK_USER_IDS.split(',')
-    const fullMessage = `${
-        mentionUserIds.length > 0 ? `Hey${mentionUserIds.map((userId) => ` <@${userId}>`)}, ` : ''
-    } ${message}`
-
-    console.log('Sending a message to slack: ', fullMessage)
-
-    const body = {
-        type: 'mrkdwn',
-        text: fullMessage,
-    };
-
-    return got(HFP_MONITOR_SLACK_WEBHOOK_URL, {
-        method: 'post',
-        json: body,
-    });
-
-}
-
-scheduleMonitor()
