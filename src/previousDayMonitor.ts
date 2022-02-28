@@ -10,7 +10,8 @@ const DATE_FORMAT = 'yyyy-MM-dd'
  * Designed to run once per day so that there has been enough time for
  * HFP-sink to have added all data from the previous day.
  * Checks whether there were clear gaps in previous day's HFP data or not.
- * Checks that there should be at least one file name per hour with VP in it's name.
+ * Checks that there should be four files per hour. The format is "hour-segment"
+ * where segment is 1-4 meaning 1 for 0 min, 1 for 15min, 2 for 30 min, 3 for 45 min.
  */
 export async function runPreviousDayMonitor() {
     try {
