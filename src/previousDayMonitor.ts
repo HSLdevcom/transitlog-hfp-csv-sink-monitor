@@ -35,6 +35,9 @@ async function previousDayMonitor() {
 
     let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
 
+    let dayBeforeYesterdayDate = subDays(new Date(), 2)
+    let dayBeforeYesterdayDateStr = format(dayBeforeYesterdayDate, DATE_FORMAT)
+
     let yesterdayDate = subDays(new Date(), 1)
     yesterdayDate = set(yesterdayDate, { hours: 0, minutes: 0, seconds: 0 })
     let yesterdayDateStr = format(yesterdayDate, DATE_FORMAT)
@@ -48,21 +51,34 @@ async function previousDayMonitor() {
         foundBlobNameMap.set(`${hour}-3`, false)
         foundBlobNameMap.set(`${hour}-4`, false)
     }
+    for await (const blob of storageClient.findBlobsByTags(
+        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday <= '${dayBeforeYesterdayDateStr}' AND max_oday >= '${dayBeforeYesterdayDateStr}'`
+    )) {
+        let { hourString, dateString } = getHourAndDateStrings(blob.name)
+
+        // We are only interested in blobs over 24h+
+        if (dateString === yesterdayDateStr) {
+            foundBlobNameMap.set(hourString, true)
+        }
+    }
 
     for await (const blob of storageClient.findBlobsByTags(
-        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday = '${yesterdayDateStr}'`
+        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday <= '${yesterdayDateStr}' AND max_oday >= '${yesterdayDateStr}'`
     )) {
-        let nameParts = blob.name.split('T')
+        let { hourString, dateString } = getHourAndDateStrings(blob.name)
+        // We are only interested in blobs under 24h
+        if (dateString === yesterdayDateStr) {
+            foundBlobNameMap.set(hourString, true)
+        }
+    }
+
+    function getHourAndDateStrings(blobName: string) {
+        let nameParts = blobName.split('T')
         let dateString = nameParts[0]
         let hourString = nameParts[1].substring(0, 4)
-
-        // Blobs with min_oday = yesterdayDateStr can have blobs from the current day if
-        // there is traffic 24h+ traffic. Filter those blobs out.
-        if (dateString === format(new Date(), 'yyyy-MM-dd')) {
-            continue
-        }
-
-        foundBlobNameMap.set(hourString, true)
+        // remove one leading zero
+        hourString = hourString.replace(/^0/, '')
+        return { hourString, dateString }
     }
 
     let unobservedBlobHours: string[] = []
