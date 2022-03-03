@@ -91,7 +91,7 @@ async function previousDayMonitor() {
     let alertMessage: string | null = null
     if (unobservedBlobHours.length > 0) {
         let blobHourDateRanges = getBlobHourRangesFromHfpGaps(unobservedBlobHours, yesterdayDate)
-        alertMessage = `Found gap(s) in HFP data (${yesterdayDateStr}): [${blobHourDateRanges.join(' ')}]. Investigate and fix the problem as soon as possible.`
+        alertMessage = `Found gap(s) in HFP data (${yesterdayDateStr}): [${blobHourDateRanges.join(', ')}]. Investigate and fix the problem as soon as possible.`
     }
 
     if (alertMessage) {
@@ -105,15 +105,12 @@ async function previousDayMonitor() {
 function getBlobHourRangesFromHfpGaps(blobHours: string[], startDate: Date) {
     let currentBh = blobHours.shift()!
     let startBh = cloneDeep(currentBh)
-    let currentHour: number = parseInt(currentBh.charAt(0), 10)
-    let currentSeg: number = parseInt(currentBh.charAt(2), 10)
+    let [ currentHour, currentSeg ]  = getHourAndSegFromBlobHour(currentBh)
     let dateRanges: string[] = []
-    let currentStartBh = currentBh
 
     while(blobHours.length > 0) {
         let nextBh = blobHours.shift()!
-        let nextHour: number = parseInt(nextBh.charAt(0), 10)
-        let nextSeg: number = parseInt(nextBh.charAt(2), 10)
+        let [ nextHour, nextSeg ]  = getHourAndSegFromBlobHour(nextBh)
         // Check if date range continues (happy case) or not (unhappy case)
         if (currentHour === nextHour) {
             if (currentSeg + 1 === nextSeg) {
@@ -138,16 +135,36 @@ function getBlobHourRangesFromHfpGaps(blobHours: string[], startDate: Date) {
         }
         // happy case
         currentBh = nextBh
-        currentHour = parseInt(currentBh.charAt(0), 10)
-        currentSeg = parseInt(currentBh.charAt(2), 10)
-    }
-
-    function getBlobHourRangeFromBlobHours(blobHour1: string, blobHour2: string) {
-        let hour1 = String(parseInt(blobHour1.charAt(0), 10)).padStart(2, '0')
-        let min1 =  String((parseInt(blobHour1.charAt(2), 10) - 1) * 15).padStart(2, '0')
-        let hour2 = String(parseInt(blobHour2.charAt(0), 10)).padStart(2, '0')
-        let min2 = String((parseInt(blobHour2.charAt(2), 10) - 1) * 15).padStart(2, '0')
-        return `${hour1}:${min1} - ${hour2}:${min2}`
+        let [ newHour, newSeg ]  = getHourAndSegFromBlobHour(currentBh)
+        currentHour = newHour
+        currentSeg = newSeg
     }
     return dateRanges
+}
+
+function getHourAndSegFromBlobHour(blobHour: string): number[] {
+    let [ hour, seg ]  = blobHour.split('-')
+    return [ parseInt(hour, 10), parseInt(seg, 10) ]
+}
+
+function getBlobHourRangeFromBlobHours(blobHour1: string, blobHour2: string) {
+    let [ hour1, seg1 ]  = blobHour1.split('-')
+    hour1 = hour1.padStart(2, '0')
+    let min1 =  String((parseInt(seg1, 10) - 1) * 15).padStart(2, '0')
+    let [ hour2, seg2 ]  = blobHour2.split('-')
+
+    // Increment blobHour2 by 1 segment and use that.
+    // We don't want to show 08:30 - 08:30, we want to show 08:30 - 08:45 instead.
+    let newHour2 = parseInt(hour2, 10)
+    let newSeg2 = parseInt(seg2, 10)
+    if (newSeg2 === 4) {
+        newHour2 += 1
+        newSeg2 = 1
+    } else {
+        newSeg2 += 1
+    }
+
+    hour2 = String(newHour2).padStart(2, '0')
+    let min2 = String((newSeg2 - 1) * 15).padStart(2, '0')
+    return `${hour1}:${min1} - ${hour2}:${min2}`
 }
