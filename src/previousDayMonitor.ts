@@ -108,6 +108,10 @@ function getBlobHourRangesFromHfpGaps(blobHours: string[], startDate: Date) {
     let [ currentHour, currentSeg ]  = getHourAndSegFromBlobHour(currentBh)
     let dateRanges: string[] = []
 
+    if (blobHours.length === 0) {
+        dateRanges.push(getBlobHourRangeFromBlobHours(startBh, currentBh))
+    }
+
     while(blobHours.length > 0) {
         let nextBh = blobHours.shift()!
         let [ nextHour, nextSeg ]  = getHourAndSegFromBlobHour(nextBh)
