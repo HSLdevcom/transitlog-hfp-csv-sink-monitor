@@ -36,3 +36,6 @@ export const HFP_CURRENT_DAY_MONITOR_CRON = secretsEnv.HFP_CURRENT_DAY_MONITOR_C
 export const HFP_PREVIOUS_DAY_MONITOR_CRON = secretsEnv.HFP_PREVIOUS_DAY_MONITOR_CRON || "";
 export const HFP_MONITOR_SLACK_WEBHOOK_URL = secretsEnv.HFP_MONITOR_SLACK_WEBHOOK_URL || "";
 export const HFP_MONITOR_SLACK_USER_IDS = secretsEnv.HFP_MONITOR_SLACK_USER_IDS || "";
+export const PULSAR_IP = secretsEnv.PULSAR_IP || ""
+export const PULSAR_PORT = secretsEnv.PULSAR_PORT || ""
+export const PULSAR_BACKLOG_MONITOR_CRON = secretsEnv.PULSAR_BACKLOG_MONITOR_CRON || ""
