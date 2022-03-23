@@ -3,7 +3,7 @@ import { alertSlack } from "./alertSlack"
 import { HFP_MONITOR_PULSAR_IP } from "./constants"
 import { HFP_MONITOR_PULSAR_PORT } from "./constants"
 
-const MESSAGE_COUNT_BOUNDARY_IN_MILLIONS = 50 // 50M messages = approx data from 12 hours
+const MESSAGE_COUNT_BOUNDARY_IN_MILLIONS = 50 // 50M messages = approximately data from 12 hours
 
 export async function runPulsarBacklogMonitor() {
     try {
@@ -11,19 +11,19 @@ export async function runPulsarBacklogMonitor() {
     } catch(e) {
         let alertMessage = 'Something bad happened. There seems to be an issue with pulsar backlog message count. Investigate and fix the problem.'
         console.log('Something bad happened: ', e)
-        // await alertSlack(alertMessage)
+        await alertSlack(alertMessage)
     }
 }
 
 async function pulsarBacklogMonitor() {
-    console.log('at pulsarBacklogMonitor')
-
     if (!HFP_MONITOR_PULSAR_IP) {
         throw new Error("Secret HFP_MONITOR_PULSAR_IP is missing.")
     }
     if (!HFP_MONITOR_PULSAR_PORT) {
         throw new Error("Secret HFP_MONITOR_PULSAR_PORT is missing.")
     }
+
+    console.log(`Running Pulsar Backlog Monitor.`)
 
     /**
      * Taken from https://pulsar.apache.org/docs/en/admin-api-topics/#get-stats
@@ -35,6 +35,9 @@ async function pulsarBacklogMonitor() {
      * Tenant: dev-transitdata
      * Namespace: hfp
      * Topic name: v2
+     *
+     * NOTE: when developing locally, you have to have a tunnel open to pulsar_dev.
+     * Ask for a command from Transitlog / Transitdata team, if you dont have one.
      */
     let response
     try {
@@ -60,15 +63,14 @@ async function pulsarBacklogMonitor() {
     if (isNaN(rawBacklogMessageCount)) {
         throw new Error('Could not read hfp backlog message count, msgBacklog was NaN.')
     }
-    let backlogMessageCount = rawBacklogMessageCount / 1000000
+
+    let backlogMessageCountInMillions = rawBacklogMessageCount / 1000000
     let alertMessage
-    if (backlogMessageCount > MESSAGE_COUNT_BOUNDARY_IN_MILLIONS) {
-        alertMessage = `HFP-sinkin Pulsar backlogilla on viestejä ~${backlogMessageCount.toFixed(1)} miljoonaa (vertailun vuoksi 65 miljoonaa viestiä vastaa dataa noin 12h ajalta ruuhka-aikana). Tämä siis vain tiedoksi, tilannetta on hyvä tarkkailla. Huom. pitkä backlog voi lisätä viivettä siihen, milloin blobit latautuvat. Tällä hetkellä backlogin koko on 80 GB eli sinne mahtuu noin 3 päivän datat. Varoitus: tämän rajan ylittyessä HFP-dataa alkaa kadota.`
+    if (backlogMessageCountInMillions > MESSAGE_COUNT_BOUNDARY_IN_MILLIONS) {
+        alertMessage = `HFP-sink Pulsar backlog has ~${backlogMessageCountInMillions.toFixed(1)} million messages (as a comparison 65 million messages corresponds to approximately data from 12 hours in congestion times). This is just for your info, it's good to keep an eye on this situation. Note: a long backlog can delay the time when blobs are loaded. Currently backlog size is 80 Gb so it can hold data from 3 days. Warning: after passing this boundary, HFP-data starts to disappear.`
     }
     if (alertMessage) {
-        console.log('alertMessage ', alertMessage)
-        // await alertSlack(alertMessage)
+        await alertSlack(alertMessage)
     }
-    // TODO: remove when it works
-    console.log('Pulsar monitoring complete, message count: ', backlogMessageCount)
+    console.log('Pulsar monitoring complete, backlog message count was: ', backlogMessageCountInMillions)
 }
