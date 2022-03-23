@@ -1,7 +1,7 @@
 import fetch from "node-fetch"
 import { alertSlack } from "./alertSlack"
-import { PULSAR_IP } from "./constants"
-import { PULSAR_PORT } from "./constants"
+import { HFP_MONITOR_PULSAR_IP } from "./constants"
+import { HFP_MONITOR_PULSAR_PORT } from "./constants"
 
 const MESSAGE_COUNT_BOUNDARY_IN_MILLIONS = 50 // 50M messages = approx data from 12 hours
 
@@ -17,6 +17,14 @@ export async function runPulsarBacklogMonitor() {
 
 async function pulsarBacklogMonitor() {
     console.log('at pulsarBacklogMonitor')
+
+    if (!HFP_MONITOR_PULSAR_IP) {
+        throw new Error("Secret HFP_MONITOR_PULSAR_IP is missing.")
+    }
+    if (!HFP_MONITOR_PULSAR_PORT) {
+        throw new Error("Secret HFP_MONITOR_PULSAR_PORT is missing.")
+    }
+
     /**
      * Taken from https://pulsar.apache.org/docs/en/admin-api-topics/#get-stats
      *
@@ -31,7 +39,7 @@ async function pulsarBacklogMonitor() {
     let response
     try {
         response = await fetch(
-            `http://${PULSAR_IP}:${PULSAR_PORT}/admin/v2/persistent/dev-transitdata/hfp/v2/stats`,
+            `http://${HFP_MONITOR_PULSAR_IP}:${HFP_MONITOR_PULSAR_PORT}/admin/v2/persistent/dev-transitdata/hfp/v2/stats`,
             {
                 method: 'GET',
             }
