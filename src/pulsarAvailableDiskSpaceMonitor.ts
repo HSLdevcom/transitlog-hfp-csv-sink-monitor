@@ -7,6 +7,15 @@ import { ensureSecretExists } from "./utils"
 
 const REQUIRED_AVAILABLE_DISK_SPACE_PERCENTAGE = 20
 
+/**
+ * Designed so that at each Pulsar VM we have a bash script listening
+ * to a port and responding currently used disk space at a path
+ * that we want to monitor.
+ *
+ * If available disk space is OK, no alert is sent
+ * If available disk space is NOT ok, an alert to slack is sent
+ * If a request to Pulsar VM fails or takes too long, an alert to slack is sent
+ */
 export async function runAvailableDiskSpaceMonitor() {
     try {
         await availableDiskSpaceMonitor()
