@@ -78,7 +78,7 @@ async function currentDayMonitor() {
         }
     }
 
-    let alertMessage: string | null = 'Critical alert: HFP sink [PRODUCTION] might be down. '
+    let alertMessage: string | null = 'HFP sink might be down. '
     let alertMessageEnd = 'Investigate and fix the problem as soon as possible.'
     if (!isAnyBlobLastModifiedOk) {
         alertMessage += `Did not find any blob with lastModified within ${MONITOR_BLOB_LAST_MODIFIED_WITHIN_HOURS} hours. `

@@ -60,7 +60,7 @@ async function monitorBookieAvailableDiskSpace(bookieIP: string) {
                         // Currently availableDiskSpaceResponse = used disk space
                         let availableDiskSpace = 100 - parseInt(availableDiskSpaceResponse, 10)
                         if (availableDiskSpace < REQUIRED_AVAILABLE_DISK_SPACE_PERCENTAGE) {
-                            let alertMessage = `Pulsar bookie (${bookieIP} available disk space was lower than ${REQUIRED_AVAILABLE_DISK_SPACE_PERCENTAGE}%. Investigate this and fix as soon as possible.`
+                            let alertMessage = `Pulsar bookie (${bookieIP}) available disk space was: ${availableDiskSpace}%, required available percentage is: ${REQUIRED_AVAILABLE_DISK_SPACE_PERCENTAGE}%. Investigate this and fix as soon as possible.`
                             await alertSlack(alertMessage)
                         }
                         console.log(`Available disk space monitoring complete, available disk space of bookie ${bookieIP} was: ${availableDiskSpace}%`)
