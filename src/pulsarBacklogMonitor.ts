@@ -1,7 +1,8 @@
 import fetch from "node-fetch"
 import { alertSlack } from "./alertSlack"
-import { HFP_MONITOR_PULSAR_IP } from "./constants"
-import { HFP_MONITOR_PULSAR_PORT } from "./constants"
+import { HFP_MONITOR_PULSAR_PROXY_IP } from "./constants"
+import { HFP_MONITOR_PULSAR_ADMIN_PORT } from "./constants"
+import { ensureSecretExists } from "./utils"
 
 const MESSAGE_COUNT_BOUNDARY_IN_MILLIONS = 50 // 50M messages = approximately data from 12 hours
 
@@ -16,12 +17,8 @@ export async function runPulsarBacklogMonitor() {
 }
 
 async function pulsarBacklogMonitor() {
-    if (!HFP_MONITOR_PULSAR_IP) {
-        throw new Error("Secret HFP_MONITOR_PULSAR_IP is missing.")
-    }
-    if (!HFP_MONITOR_PULSAR_PORT) {
-        throw new Error("Secret HFP_MONITOR_PULSAR_PORT is missing.")
-    }
+    ensureSecretExists(HFP_MONITOR_PULSAR_PROXY_IP, 'HFP_MONITOR_PULSAR_PROXY_IP')
+    ensureSecretExists(HFP_MONITOR_PULSAR_ADMIN_PORT, 'HFP_MONITOR_PULSAR_ADMIN_PORT')
 
     console.log(`Running Pulsar Backlog Monitor.`)
 
@@ -36,13 +33,13 @@ async function pulsarBacklogMonitor() {
      * Namespace: hfp
      * Topic name: v2
      *
-     * NOTE: when developing locally, you have to have a tunnel open to pulsar_dev.
+     * NOTE: when developing locally, you have to have a tunnel open to pulsar_dev_proxy.
      * Ask for a command from Transitlog / Transitdata team, if you dont have one.
      */
     let response
     try {
         response = await fetch(
-            `http://${HFP_MONITOR_PULSAR_IP}:${HFP_MONITOR_PULSAR_PORT}/admin/v2/persistent/dev-transitdata/hfp/v2/stats`,
+            `http://${HFP_MONITOR_PULSAR_PROXY_IP}:${HFP_MONITOR_PULSAR_ADMIN_PORT}/admin/v2/persistent/dev-transitdata/hfp/v2/stats`,
             {
                 method: 'GET',
             }

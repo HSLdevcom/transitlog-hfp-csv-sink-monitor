@@ -3,6 +3,7 @@ import {format, getHours, set, subDays} from 'date-fns'
 import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './constants'
 import {cloneDeep} from 'lodash'
 import { alertSlack } from './alertSlack'
+import { ensureSecretExists } from './utils'
 
 const DATE_FORMAT = 'yyyy-MM-dd'
 
@@ -24,12 +25,8 @@ export async function runPreviousDayMonitor() {
 }
 
 async function previousDayMonitor() {
-    if (!HFP_STORAGE_CONNECTION_STRING) {
-        throw new Error('Secret HFP_STORAGE_CONNECTION_STRING is missing.')
-    }
-    if (!HFP_STORAGE_CONTAINER_NAME) {
-        throw new Error('Secret HFP_STORAGE_CONTAINER_NAME is missing.')
-    }
+    ensureSecretExists(HFP_STORAGE_CONNECTION_STRING, 'HFP_STORAGE_CONNECTION_STRING')
+    ensureSecretExists(HFP_STORAGE_CONTAINER_NAME, 'HFP_STORAGE_CONTAINER_NAME')
 
     console.log(`Running HFP sink previous day monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
 

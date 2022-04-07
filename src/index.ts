@@ -1,45 +1,19 @@
 require('dotenv').config()
 
 import schedule from 'node-schedule'
-import {HFP_CURRENT_DAY_MONITOR_CRON, HFP_PREVIOUS_DAY_MONITOR_CRON, PULSAR_BACKLOG_MONITOR_CRON} from './constants'
+import {AVAILABLE_DISK_SPACE_MONITOR_CRON, HFP_CURRENT_DAY_MONITOR_CRON, HFP_PREVIOUS_DAY_MONITOR_CRON, PULSAR_BACKLOG_MONITOR_CRON} from './constants'
 import {runCurrentDayMonitor} from './currentDayMonitor';
 import { runPreviousDayMonitor } from './previousDayMonitor';
+import { runAvailableDiskSpaceMonitor } from './pulsarAvailableDiskSpaceMonitor';
 import { runPulsarBacklogMonitor } from './pulsarBacklogMonitor';
+import { ensureSecretExists } from './utils';
 
-export function scheduleCurrentDataMonitor() {
-    if (!HFP_CURRENT_DAY_MONITOR_CRON) {
-        throw new Error('HFP_CURRENT_DAY_MONITOR_CRON ENV variable is missing.')
-    }
+function scheduleMonitorWithCron(cronValue: string, cronName: string, cronJob: () => void) {
+    ensureSecretExists(cronValue, cronName)
 
-    console.log(`Scheduled monitor with cron: ${HFP_CURRENT_DAY_MONITOR_CRON}`);
+    console.log(`Scheduled monitor with cron: ${cronValue}`);
 
-    let job = schedule.scheduleJob(HFP_CURRENT_DAY_MONITOR_CRON, runCurrentDayMonitor)
-    if (job) {
-        console.log('Next monitoring will run:', job.nextInvocation().toLocaleString())
-    }
-}
-
-export function schedulePreviousDataMonitor() {
-    if (!HFP_PREVIOUS_DAY_MONITOR_CRON) {
-        throw new Error('HFP_PREVIOUS_DAY_MONITOR_CRON ENV variable is missing.')
-    }
-
-    console.log(`Scheduled monitor with cron: ${HFP_PREVIOUS_DAY_MONITOR_CRON}`);
-
-    let job = schedule.scheduleJob(HFP_PREVIOUS_DAY_MONITOR_CRON, runPreviousDayMonitor)
-    if (job) {
-        console.log('Next monitoring will run:', job.nextInvocation().toLocaleString())
-    }
-}
-
-export function schedulePulsarBacklogMonitor() {
-    if (!PULSAR_BACKLOG_MONITOR_CRON) {
-        throw new Error('PULSAR_BACKLOG_MONITOR_CRON ENV variable is missing.')
-    }
-
-    console.log(`Scheduled monitor with cron: ${PULSAR_BACKLOG_MONITOR_CRON}`);
-
-    let job = schedule.scheduleJob(PULSAR_BACKLOG_MONITOR_CRON, runPulsarBacklogMonitor)
+    let job = schedule.scheduleJob(cronValue, cronJob)
     if (job) {
         console.log('Next monitoring will run:', job.nextInvocation().toLocaleString())
     }
@@ -50,7 +24,10 @@ export function schedulePulsarBacklogMonitor() {
 // runCurrentDayMonitor()
 // runPreviousDayMonitor()
 // runPulsarBacklogMonitor()
+// runAvailableDiskSpaceMonitor()
 
-scheduleCurrentDataMonitor()
-schedulePreviousDataMonitor()
-schedulePulsarBacklogMonitor()
+// Schedule all monitor jobs with cron
+scheduleMonitorWithCron(HFP_CURRENT_DAY_MONITOR_CRON, 'HFP_CURRENT_DAY_MONITOR_CRON', runCurrentDayMonitor)
+scheduleMonitorWithCron(HFP_PREVIOUS_DAY_MONITOR_CRON, 'HFP_PREVIOUS_DAY_MONITOR_CRON', runPreviousDayMonitor)
+scheduleMonitorWithCron(PULSAR_BACKLOG_MONITOR_CRON, 'PULSAR_BACKLOG_MONITOR_CRON', runPulsarBacklogMonitor)
+scheduleMonitorWithCron(AVAILABLE_DISK_SPACE_MONITOR_CRON, 'AVAILABLE_DISK_SPACE_MONITOR_CRON', runAvailableDiskSpaceMonitor)
