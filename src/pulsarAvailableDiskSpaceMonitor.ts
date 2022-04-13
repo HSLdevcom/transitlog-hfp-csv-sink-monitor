@@ -35,9 +35,13 @@ async function availableDiskSpaceMonitor() {
     console.log(`Running Available Disk Space Monitor.`)
 
     await monitorBookieAvailableDiskSpace(HFP_MONITOR_PULSAR_BOOKIE_IP_1)
+    await delay(2500)
     await monitorBookieAvailableDiskSpace(HFP_MONITOR_PULSAR_BOOKIE_IP_2)
+    await delay(2500)
     await monitorBookieAvailableDiskSpace(HFP_MONITOR_PULSAR_BOOKIE_IP_3)
 }
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function monitorBookieAvailableDiskSpace(bookieIP: string) {
     /**
