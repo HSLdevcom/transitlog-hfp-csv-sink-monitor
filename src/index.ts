@@ -27,7 +27,7 @@ function scheduleMonitorWithCron(cronValue: string, cronName: string, cronJob: (
 // runAvailableDiskSpaceMonitor()
 
 // Schedule all monitor jobs with cron
-scheduleMonitorWithCron(HFP_CURRENT_DAY_MONITOR_CRON, 'HFP_CURRENT_DAY_MONITOR_CRON', runCurrentDayMonitor)
+// scheduleMonitorWithCron(HFP_CURRENT_DAY_MONITOR_CRON, 'HFP_CURRENT_DAY_MONITOR_CRON', runCurrentDayMonitor)
 scheduleMonitorWithCron(HFP_PREVIOUS_DAY_MONITOR_CRON, 'HFP_PREVIOUS_DAY_MONITOR_CRON', runPreviousDayMonitor)
 scheduleMonitorWithCron(PULSAR_BACKLOG_MONITOR_CRON, 'PULSAR_BACKLOG_MONITOR_CRON', runPulsarBacklogMonitor)
 scheduleMonitorWithCron(AVAILABLE_DISK_SPACE_MONITOR_CRON, 'AVAILABLE_DISK_SPACE_MONITOR_CRON', runAvailableDiskSpaceMonitor)
