@@ -1,8 +1,10 @@
 import fetch from "node-fetch"
 import http from "http"
 import { alertSlack } from "./alertSlack"
-import {HFP_MONITOR_PULSAR_BOOKIE_IP_2, HFP_MONITOR_PULSAR_BOOKIE_IP_3, HFP_MONITOR_PULSAR_BOOKIE_DISK_SPACE_PORT } from "./constants"
-import { HFP_MONITOR_PULSAR_BOOKIE_IP_1 } from "./constants"
+import { HFP_MONITOR_PULSAR_BOOKIE_IP_1,
+    HFP_MONITOR_PULSAR_BOOKIE_IP_2,
+    HFP_MONITOR_PULSAR_BOOKIE_IP_3,
+    HFP_MONITOR_PULSAR_BOOKIE_DISK_SPACE_PORT } from "./constants"
 import { ensureSecretExists } from "./utils"
 
 const REQUIRED_AVAILABLE_DISK_SPACE_PERCENTAGE = 20
