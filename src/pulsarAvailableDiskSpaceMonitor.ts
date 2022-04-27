@@ -24,7 +24,8 @@ export async function runAvailableDiskSpaceMonitor() {
     } catch(e) {
         let alertMessage = 'Something bad happened. There seems to be an issue with available disk space monitor. Investigate and fix the problem.'
         console.log('Something bad happened: ', e)
-        await alertSlack(alertMessage)
+        // TODO: enable this logging when available disk space monitoring works:
+        // await alertSlack(alertMessage)
     }
 }
 
@@ -46,6 +47,7 @@ async function availableDiskSpaceMonitor() {
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function monitorBookieAvailableDiskSpace(bookieIP: string) {
+    console.log('Trying to connect: ', bookieIP)
     /**
      * NOTE: when developing locally, you have to have a tunnel open to pulsar_bookie_1 for example.
      * Ask for a command from Transitlog / Transitdata team, if you dont have one.
@@ -65,7 +67,6 @@ async function monitorBookieAvailableDiskSpace(bookieIP: string) {
         let requestTimeout = setTimeout(() => {
             reject(`Reached timeout when sending request to bookie: ${bookieIP}`);
         }, 10000)
-        try {
             const req = http.request(options, (res) => {
                 res.setEncoding('utf8');
                 res.on('data', async (data) => {
@@ -89,10 +90,9 @@ async function monitorBookieAvailableDiskSpace(bookieIP: string) {
                     // Empty
                 });
             });
+            req.on('error', (e) => {
+                reject(`Request to pulsar bookie failed.`)
+            })
             req.end();
-        } catch (e) {
-            console.log('Request to pulsar failed: ', e)
-            reject(`Request to pulsar bookie failed.`)
-        }
     })
 }
