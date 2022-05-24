@@ -1,7 +1,7 @@
 import fetch from "node-fetch"
 import { alertSlack } from "./alertSlack"
-import { HFP_MONITOR_PULSAR_PROXY_IP } from "./constants"
-import { HFP_MONITOR_PULSAR_ADMIN_PORT } from "./constants"
+import { HFP_MONITOR_PULSAR_PROXY_IP, HFP_MONITOR_PULSAR_ADMIN_PORT, HFP_MONITOR_TARGET_ENVIRONMENT} from "./constants"
+import { TargetEnvironment } from "./enums"
 import { ensureSecretExists } from "./utils"
 
 const MESSAGE_COUNT_BOUNDARY_IN_MILLIONS = 50 // 50M messages = approximately data from 12 hours
@@ -37,15 +37,24 @@ async function pulsarBacklogMonitor() {
      * Ask for a command from Transitlog / Transitdata team, if you dont have one.
      */
     let response
+    let topicUrl = `http://${HFP_MONITOR_PULSAR_PROXY_IP}:${HFP_MONITOR_PULSAR_ADMIN_PORT}/admin/v2/persistent/`
+    if (HFP_MONITOR_TARGET_ENVIRONMENT === TargetEnvironment.DEV) {
+        topicUrl += 'dev-transitdata/hfp/v2/stats'
+    } else if (HFP_MONITOR_TARGET_ENVIRONMENT === TargetEnvironment.STAGE) {
+        topicUrl += 'stage-transitdata/hfp/v2/stats'
+    } else {
+        topicUrl += 'transitdata/hfp/v2/stats'
+    }
+
     try {
         response = await fetch(
-            `http://${HFP_MONITOR_PULSAR_PROXY_IP}:${HFP_MONITOR_PULSAR_ADMIN_PORT}/admin/v2/persistent/dev-transitdata/hfp/v2/stats`,
+            topicUrl,
             {
                 method: 'GET',
             }
         )
     } catch(e) {
-        console.log('Request to pulsar failed: ', e)
+        console.log(`Request to pulsar ${topicUrl} failed: `, e)
         throw new Error('Request to pulsar failed.')
     }
 
