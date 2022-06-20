@@ -33,7 +33,7 @@ async function currentDayMonitor() {
 
     let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
 
-    let yesterdayDateStr = format(subDays(new Date(), 1), DATE_FORMAT)
+    let minOdayDateStr = format(subDays(new Date(), 4), DATE_FORMAT)
 
     let blobNameMatchingRegexList: RegExp[] = []
     for (let i = 0; i < MONITOR_BLOB_NAME_WITHIN_HOURS; i++) {
@@ -48,7 +48,7 @@ async function currentDayMonitor() {
     }
     let uniqueBlobNamesObjects: UniqueBlobName[] = []
     for await (const blob of storageClient.findBlobsByTags(
-        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${yesterdayDateStr}'`
+        `@container='${HFP_STORAGE_CONTAINER_NAME}' AND min_oday >= '${minOdayDateStr}'`
     )) {
         // CHECK 1: Find at least one blob with name within MONITOR_BLOB_NAME_WITHIN_HOURS
         if (!foundBlobName && blobNameMatchingRegexList.some((regex) => regex.test(blob.name))) {
