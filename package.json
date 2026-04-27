@@ -9,6 +9,7 @@
     "start:production": "node -r dotenv/config build/index.js"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@azure/storage-blob": "12.8.0",
     "@types/node": "^17.0.21",
     "@types/node-fetch": "^2.6.1",
