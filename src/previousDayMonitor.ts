@@ -1,6 +1,7 @@
 import {BlobServiceClient} from '@azure/storage-blob'
-import {format, getHours, set, subDays} from 'date-fns'
-import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './constants'
+import { DefaultAzureCredential } from '@azure/identity'
+import {format, set, subDays} from 'date-fns'
+import { HFP_STORAGE_CONTAINER_NAME, HFP_STORAGE_ACCOUNT_NAME} from './constants'
 import {cloneDeep} from 'lodash'
 import { alertSlack } from './alertSlack'
 import { ensureSecretExists } from './utils'
@@ -25,12 +26,14 @@ export async function runPreviousDayMonitor() {
 }
 
 async function previousDayMonitor() {
-    ensureSecretExists(HFP_STORAGE_CONNECTION_STRING, 'HFP_STORAGE_CONNECTION_STRING')
+    ensureSecretExists(HFP_STORAGE_ACCOUNT_NAME, 'HFP_STORAGE_ACCOUNT_NAME')
     ensureSecretExists(HFP_STORAGE_CONTAINER_NAME, 'HFP_STORAGE_CONTAINER_NAME')
 
     console.log(`Running HFP sink previous day monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
 
-    let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
+    const accountUrl = `https://${HFP_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`
+    const credential = new DefaultAzureCredential()
+    const storageClient = new BlobServiceClient(accountUrl, credential)
 
     let dayBeforeYesterdayDate = subDays(new Date(), 2)
     let dayBeforeYesterdayDateStr = format(dayBeforeYesterdayDate, DATE_FORMAT)
