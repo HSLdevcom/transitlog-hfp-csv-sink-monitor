@@ -2,8 +2,8 @@ name: Build and publish Docker Hub prod image
 
 on:
   push:
-    branches:
-      - 'production'
+    tags:
+      - 'v*'
 
 jobs:
   build-container:
