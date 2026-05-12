@@ -1,9 +1,10 @@
 require('dotenv').config()
 
+import { DefaultAzureCredential } from '@azure/identity'
 import {BlobClient, BlobServiceClient} from '@azure/storage-blob'
 import {format, getHours, getUnixTime, subDays, subHours} from "date-fns";
 import { alertSlack } from './alertSlack';
-import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME} from './constants'
+import {HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME, HFP_STORAGE_ACCOUNT_NAME} from './constants'
 import { ensureSecretExists } from './utils';
 
 const MONITOR_BLOB_NAME_WITHIN_HOURS=12
@@ -26,12 +27,13 @@ export async function runCurrentDayMonitor() {
 }
 
 async function currentDayMonitor() {
-    ensureSecretExists(HFP_STORAGE_CONNECTION_STRING, 'HFP_STORAGE_CONNECTION_STRING')
+    ensureSecretExists(HFP_STORAGE_ACCOUNT_NAME, 'HFP_STORAGE_ACCOUNT_NAME')
     ensureSecretExists(HFP_STORAGE_CONTAINER_NAME, 'HFP_STORAGE_CONTAINER_NAME')
-
     console.log(`Running HFP sink current day monitor for container: ${HFP_STORAGE_CONTAINER_NAME}`)
 
-    let storageClient = BlobServiceClient.fromConnectionString(HFP_STORAGE_CONNECTION_STRING)
+    const accountUrl = `https://${HFP_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`
+    const credential = new DefaultAzureCredential()
+    const storageClient = new BlobServiceClient(accountUrl, credential)
 
     let minOdayDateStr = format(subDays(new Date(), 4), DATE_FORMAT)
 
@@ -66,7 +68,8 @@ async function currentDayMonitor() {
     let isAnyBlobLastModifiedOk = false
     for (let blobNameObject of uniqueBlobNamesObjects) {
         let blobName = blobNameObject.blobName
-        let blobClient = new BlobClient(HFP_STORAGE_CONNECTION_STRING, HFP_STORAGE_CONTAINER_NAME, blobName)
+        const containerClient = storageClient.getContainerClient(HFP_STORAGE_CONTAINER_NAME)
+        const blobClient = containerClient.getBlobClient(blobName)
         let blobProperties = await blobClient.getProperties()
         let lastModified = blobProperties.lastModified as unknown as string
 
