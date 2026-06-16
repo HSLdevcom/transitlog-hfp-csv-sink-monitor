@@ -1,9 +1,9 @@
-name: Build and publish Docker Hub prod image
+name: Build and publish Docker Hub dev image
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - 'dev'
 
 jobs:
   build-container:
@@ -29,4 +29,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: hsldevcom/transitlog-hfp-csv-sink-monitor:${{ github.ref_name }}
+          tags: hsldevcom/transitlog-hfp-csv-sink-monitor:dev

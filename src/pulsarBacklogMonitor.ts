@@ -43,7 +43,7 @@ async function pulsarBacklogMonitor() {
     } else if (HFP_MONITOR_TARGET_ENVIRONMENT === TargetEnvironment.STAGE) {
         topicUrl += 'stage-transitdata/hfp/v2/stats'
     } else {
-        topicUrl += 'transitdata/hfp/v2/stats'
+        topicUrl += 'prod-transitdata/hfp/v2/stats'
     }
 
     try {

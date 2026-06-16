@@ -1,4 +1,4 @@
-FROM node:14-alpine AS base
+FROM node:20-alpine AS base
 
 ENV WORK /opt/transitlog-hfp-csv-sink-monitor
 
@@ -13,7 +13,7 @@ COPY . ${WORK}
 # Bundle app source
 RUN yarn install && yarn run build
 
-FROM node:14-alpine
+FROM node:20-alpine
 ENV WORK /opt/transitlog-hfp-csv-sink-monitor
 ENV TZ="Europe/Helsinki"
 
