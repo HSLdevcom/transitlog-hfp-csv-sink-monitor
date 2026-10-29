@@ -1,0 +1,24 @@
+---
+name: 'CI/CD: Continuous integration and continuous deployment'
+
+'on':
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build-check-test-push:
+    name: Build, check, test, push
+    uses: HSLdevcom/transitdata-shared-workflows/.github/workflows/ci-cd-typescript.yml@1.0.7
+    secrets: inherit
+    with:
+      checkAndTestOutsideDocker: true
+      checkAndTestInsideDocker: true

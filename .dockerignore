@@ -1,9 +1,13 @@
-.idea
-.git
-.gitignore
-.env
-node_modules
-secrets
-yarn-error.log
-Dockerfile
-README.md
+# Deny everything.
+**
+
+# Allow these.
+!/.env.prod
+!/.prettierignore
+!/.prettierrc
+!/package-lock.json
+!/package.json
+!/src
+!/tests
+!/tsconfig.json
+!/tsconfig.test.json

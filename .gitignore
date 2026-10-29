@@ -3,3 +3,6 @@ node_modules
 .idea
 build
 coverage
+
+# Created by jest-junit for Codecov
+junit.xml
