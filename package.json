@@ -7,7 +7,9 @@
     "start": "ts-node-dev -r dotenv/config src/index.ts",
     "build": "tsc -p .",
     "start:production": "node -r dotenv/config build/index.js",
-    "test": "TZ=Europe/Helsinki jest"
+    "test": "TZ=Europe/Helsinki jest",
+    "prettier": "prettier --write .",
+    "prettier:check": "prettier --check ."
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "jest": "^29.7.0",
+    "prettier": "^3.6.2",
     "ts-jest": "^29.2.5"
   },
   "jest": {
