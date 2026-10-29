@@ -1,3 +1,8 @@
 node_modules
 .env
 .idea
+build
+coverage
+
+# Created by jest-junit for Codecov
+junit.xml
